@@ -1,0 +1,67 @@
+# ============================================================
+# infrastructure/configs/disaster-recovery.yaml - DR configuration
+# ============================================================
+
+disaster_recovery:
+  backup:
+    strategy: "automated"
+    frequency:
+      dev: "weekly"
+      staging: "daily"
+      prod: "continuous"
+    
+    retention:
+      dev:
+        daily: 7
+        weekly: 4
+        monthly: 1
+      
+      staging:
+        daily: 14
+        weekly: 4
+        monthly: 3
+      
+      prod:
+        daily: 30
+        weekly: 12
+        monthly: 12
+        yearly: 7
+    
+    targets:
+      s3:
+        cross_region_replication: true
+        destination_region: "eu-west-1"
+      
+      dynamodb:
+        point_in_time_recovery: true
+        global_tables: true
+      
+      rds:
+        automated_backups: true
+        snapshot_retention: 30
+  
+  recovery:
+    rto:  # Recovery Time Objective
+      dev: "24 hours"
+      staging: "4 hours"
+      prod: "1 hour"
+    
+    rpo:  # Recovery Point Objective
+      dev: "24 hours"
+      staging: "4 hours"
+      prod: "15 minutes"
+    
+    procedures:
+      - name: "S3 bucket recovery"
+        steps:
+          - "Identify corrupted/lost data"
+          - "Restore from cross-region replica"
+          - "Validate data integrity"
+          - "Update DNS/endpoints if needed"
+      
+      - name: "Lambda function recovery"
+        steps:
+          - "Redeploy from GitHub"
+          - "Restore environment variables from Secrets Manager"
+          - "Test functionality"
+          - "Update API Gateway endpoints"

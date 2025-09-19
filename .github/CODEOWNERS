@@ -1,0 +1,33 @@
+---
+# ============================================================
+# .github/CODEOWNERS - Code ownership
+# ============================================================
+
+# Default owners
+* @ukhsa-data-engineering
+
+# Infrastructure
+/infrastructure/ @ukhsa-platform @ukhsa-data-engineering
+/infrastructure/terraform/ @ukhsa-platform
+/infrastructure/scripts/ @ukhsa-devops @ukhsa-platform
+
+# Application code
+/lambdas/ @ukhsa-data-engineering
+/glue/ @ukhsa-data-engineering @ukhsa-analytics
+
+# Tests
+/tests/ @ukhsa-data-engineering @ukhsa-qa
+
+# Documentation
+/docs/ @ukhsa-data-engineering @ukhsa-technical-writers
+README.md @ukhsa-data-engineering
+
+# CI/CD
+/.github/ @ukhsa-devops @ukhsa-data-engineering
+
+# Security-sensitive files
+/infrastructure/terraform/modules/security/ @ukhsa-security @ukhsa-platform
+/infrastructure/terraform/modules/iam/ @ukhsa-security @ukhsa-platform
+*.pem @ukhsa-security
+*.key @ukhsa-security
+

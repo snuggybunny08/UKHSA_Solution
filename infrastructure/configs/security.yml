@@ -1,0 +1,106 @@
+# ============================================================
+# infrastructure/configs/security.yaml - Security configuration
+# ============================================================
+
+security:
+  encryption:
+    s3:
+      algorithm: "AES256"
+      kms_key_rotation: true
+    
+    dynamodb:
+      enabled: true
+      kms_managed: true
+    
+    lambda:
+      environment_variables: true
+  
+  iam:
+    password_policy:
+      minimum_length: 14
+      require_uppercase: true
+      require_lowercase: true
+      require_numbers: true
+      require_symbols: true
+      max_age_days: 90
+    
+    mfa:
+      required: true
+      exception_roles: []
+  
+  network:
+    vpc:
+      flow_logs: true
+      dns_resolution: true
+      dns_hostnames: true
+    
+    security_groups:
+      ingress_rules:
+        - protocol: "https"
+          port: 443
+          source: "0.0.0.0/0"
+      
+      egress_rules:
+        - protocol: "all"
+          port: -1
+          destination: "0.0.0.0/0"
+    
+    nacls:
+      private_subnet:
+        inbound:
+          - rule_number: 100
+            protocol: "tcp"
+            port_range: "443"
+            source: "10.0.0.0/8"
+            action: "allow"
+        
+        outbound:
+          - rule_number: 100
+            protocol: "all"
+            port_range: "all"
+            destination: "0.0.0.0/0"
+            action: "allow"
+  
+  compliance:
+    standards:
+      - "GDPR"
+      - "NHS Data Security and Protection Toolkit"
+      - "ISO 27001"
+      - "SOC 2"
+    
+    data_residency: "UK"
+    
+    audit:
+      cloudtrail:
+        enabled: true
+        multi_region: true
+        log_file_validation: true
+        event_selector:
+          - read_write_type: "All"
+            include_management_events: true
+            data_resources:
+              - type: "AWS::S3::Object"
+                values: ["arn:aws:s3:::*/"]
+      
+      config:
+        enabled: true
+        recording_group:
+          all_supported: true
+          include_global_resources: true
+    
+    pii_handling:
+      detection:
+        - service: "macie"
+          enabled: true
+          scan_frequency: "continuous"
+      
+      remediation:
+        automatic: true
+        actions:
+          - "quarantine"
+          - "notify"
+          - "log"
+      
+      retention:
+        anonymized_data: 2555  # 7 years
+        identified_data: 90    # 3 months

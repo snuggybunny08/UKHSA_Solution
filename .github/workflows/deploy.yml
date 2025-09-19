@@ -1,0 +1,418 @@
+# .github/workflows/deploy.yml - Main deployment workflow
+
+name: Deploy UKHSA Data Platform
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+        - dev
+        - staging
+        - prod
+
+env:
+  AWS_REGION: eu-west-2
+  PYTHON_VERSION: '3.11'
+  TERRAFORM_VERSION: '1.5.0'
+
+jobs:
+  # ============================================================
+  # Validation and Testing
+  # ============================================================
+  
+  validate:
+    name: Validate Code and Configuration
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+      
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Cache dependencies
+      uses: actions/cache@v3
+      with:
+        path: |
+          ~/.cache/pip
+          ~/.cache/pre-commit
+        key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements*.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install -r requirements-dev.txt
+    
+    - name: Run pre-commit hooks
+      run: |
+        pre-commit run --all-files
+    
+    - name: Validate Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: ${{ env.TERRAFORM_VERSION }}
+    
+    - name: Terraform Format Check
+      run: |
+        cd infrastructure/terraform
+        terraform fmt -check -recursive
+    
+    - name: Terraform Init
+      run: |
+        cd infrastructure/terraform
+        terraform init -backend=false
+    
+    - name: Terraform Validate
+      run: |
+        cd infrastructure/terraform
+        terraform validate
+
+  # ============================================================
+  # Unit Tests
+  # ============================================================
+  
+  unit-tests:
+    name: Run Unit Tests
+    runs-on: ubuntu-latest
+    needs: validate
+    
+    strategy:
+      matrix:
+        python-version: ['3.9', '3.10', '3.11']
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest pytest-cov pytest-mock moto boto3
+    
+    - name: Run unit tests with coverage
+      run: |
+        pytest tests/unit \
+          --cov=lambdas \
+          --cov-report=term-missing \
+          --cov-report=xml \
+          --cov-fail-under=80 \
+          -v
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+
+  # ============================================================
+  # Integration Tests
+  # ============================================================
+  
+  integration-tests:
+    name: Run Integration Tests
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Setup LocalStack
+      run: |
+        pip install localstack awscli-local
+        docker pull localstack/localstack
+        localstack start -d
+        echo "Waiting for LocalStack to be ready..."
+        localstack wait -t 30
+    
+    - name: Run integration tests
+      env:
+        AWS_ACCESS_KEY_ID: test
+        AWS_SECRET_ACCESS_KEY: test
+        AWS_DEFAULT_REGION: ${{ env.AWS_REGION }}
+        LOCALSTACK_ENDPOINT: http://localhost:4566
+      run: |
+        pip install -r requirements.txt
+        pytest tests/integration -v
+
+  # ============================================================
+  # Security Scanning
+  # ============================================================
+  
+  security:
+    name: Security Scanning
+    runs-on: ubuntu-latest
+    needs: validate
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        scan-type: 'fs'
+        scan-ref: '.'
+        format: 'sarif'
+        output: 'trivy-results.sarif'
+    
+    - name: Upload Trivy results to GitHub Security
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+    
+    - name: Run Snyk security scan
+      uses: snyk/actions/python-3.10@master
+      env:
+        SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+      with:
+        args: --severity-threshold=high
+    
+    - name: Run Bandit security linter
+      run: |
+        pip install bandit
+        bandit -r lambdas/ -f json -o bandit-report.json
+    
+    - name: Upload Bandit results
+      uses: actions/upload-artifact@v3
+      if: always()
+      with:
+        name: bandit-report
+        path: bandit-report.json
+
+  # ============================================================
+  # Build Lambda Packages
+  # ============================================================
+  
+  build-lambdas:
+    name: Build Lambda Deployment Packages
+    runs-on: ubuntu-latest
+    needs: [unit-tests, security]
+    
+    strategy:
+      matrix:
+        lambda:
+          - name: file_processor
+            path: lambdas/file_processor
+          - name: data_validator
+            path: lambdas/validation
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Build Lambda package - ${{ matrix.lambda.name }}
+      run: |
+        cd ${{ matrix.lambda.path }}
+        pip install -r requirements.txt -t ./package
+        cd package
+        zip -r ../${{ matrix.lambda.name }}.zip .
+        cd ..
+        zip -g ${{ matrix.lambda.name }}.zip *.py
+    
+    - name: Upload Lambda package
+      uses: actions/upload-artifact@v3
+      with:
+        name: lambda-${{ matrix.lambda.name }}
+        path: ${{ matrix.lambda.path }}/${{ matrix.lambda.name }}.zip
+
+  # ============================================================
+  # Build Lambda Layers
+  # ============================================================
+  
+  build-layers:
+    name: Build Lambda Layers
+    runs-on: ubuntu-latest
+    needs: validate
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Build pandas layer
+      run: |
+        mkdir -p layers/pandas/python
+        pip install pandas numpy pyarrow -t layers/pandas/python
+        cd layers/pandas
+        zip -r ../pandas_layer.zip .
+    
+    - name: Upload layer package
+      uses: actions/upload-artifact@v3
+      with:
+        name: lambda-layers
+        path: layers/*.zip
+
+  # ============================================================
+  # Deploy to Environment
+  # ============================================================
+  
+  deploy:
+    name: Deploy to ${{ github.event.inputs.environment || 'dev' }}
+    runs-on: ubuntu-latest
+    needs: [build-lambdas, build-layers, integration-tests]
+    environment: ${{ github.event.inputs.environment || 'dev' }}
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: Download Lambda packages
+      uses: actions/download-artifact@v3
+      with:
+        path: lambda_packages
+    
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v2
+      with:
+        terraform_version: ${{ env.TERRAFORM_VERSION }}
+    
+    - name: Terraform Init
+      run: |
+        cd infrastructure/terraform
+        terraform init
+    
+    - name: Select Terraform Workspace
+      run: |
+        cd infrastructure/terraform
+        terraform workspace select ${{ github.event.inputs.environment || 'dev' }} || terraform workspace new ${{ github.event.inputs.environment || 'dev' }}
+    
+    - name: Terraform Plan
+      id: plan
+      run: |
+        cd infrastructure/terraform
+        terraform plan -var-file=environments/${{ github.event.inputs.environment || 'dev' }}.tfvars -out=tfplan
+    
+    - name: Terraform Apply
+      if: github.ref == 'refs/heads/main'
+      run: |
+        cd infrastructure/terraform
+        terraform apply tfplan
+    
+    - name: Deploy Glue ETL Scripts
+      run: |
+        aws s3 cp glue/jobs/ s3://ukhsa-glue-scripts-${{ github.event.inputs.environment || 'dev' }}/scripts/ --recursive
+    
+    - name: Update Lambda Functions
+      run: |
+        for lambda in file_processor data_validator; do
+          aws lambda update-function-code \
+            --function-name ukhsa-${lambda}-${{ github.event.inputs.environment || 'dev' }} \
+            --s3-bucket ukhsa-lambda-deployments-${{ github.event.inputs.environment || 'dev' }} \
+            --s3-key ${lambda}.zip
+        done
+
+  # ============================================================
+  # Post-Deployment Tests
+  # ============================================================
+  
+  smoke-tests:
+    name: Run Smoke Tests
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+    
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v2
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+    
+    - name: Run smoke tests
+      run: |
+        pip install pytest boto3
+        pytest tests/smoke -v --env=${{ github.event.inputs.environment || 'dev' }}
+    
+    - name: Validate deployment
+      run: |
+        # Check S3 buckets exist
+        aws s3 ls s3://ukhsa-landing-${{ github.event.inputs.environment || 'dev' }}
+        aws s3 ls s3://ukhsa-validated-${{ github.event.inputs.environment || 'dev' }}
+        
+        # Check Lambda functions
+        aws lambda get-function --function-name ukhsa-file-processor-${{ github.event.inputs.environment || 'dev' }}
+        aws lambda get-function --function-name ukhsa-data-validator-${{ github.event.inputs.environment || 'dev' }}
+        
+        # Check Glue resources
+        aws glue get-database --name ukhsa_db_${{ github.event.inputs.environment || 'dev' }}
+
+  # ============================================================
+  # Notification
+  # ============================================================
+  
+  notify:
+    name: Send Notification
+    runs-on: ubuntu-latest
+    needs: [deploy, smoke-tests]
+    if: always()
+    
+    steps:
+    - name: Send Slack notification
+      uses: slackapi/slack-github-action@v1.24.0
+      with:
+        payload: |
+          {
+            "text": "Deployment Status: ${{ needs.deploy.result }}",
+            "blocks": [
+              {
+                "type": "section",
+                "text": {
+                  "type": "mrkdwn",
+                  "text": "*UKHSA Data Platform Deployment*\n*Status:* ${{ needs.deploy.result }}\n*Environment:* ${{ github.event.inputs.environment || 'dev' }}\n*Branch:* ${{ github.ref_name }}\n*Commit:* ${{ github.sha }}"
+                }
+              }
+            ]
+          }
+      env:
+        SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+

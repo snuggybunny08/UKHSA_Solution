@@ -1,0 +1,62 @@
+
+# ============================================================
+# infrastructure/configs/aws-config.yaml - AWS configuration
+# ============================================================
+
+aws:
+  region: "eu-west-2"
+  availability_zones:
+    - "eu-west-2a"
+    - "eu-west-2b"
+    - "eu-west-2c"
+  
+  account_ids:
+    dev: "111111111111"
+    staging: "222222222222"
+    prod: "333333333333"
+  
+  vpc_config:
+    dev:
+      cidr: "10.0.0.0/16"
+      private_subnets:
+        - "10.0.1.0/24"
+        - "10.0.2.0/24"
+      public_subnets:
+        - "10.0.101.0/24"
+        - "10.0.102.0/24"
+    
+    staging:
+      cidr: "10.1.0.0/16"
+      private_subnets:
+        - "10.1.1.0/24"
+        - "10.1.2.0/24"
+      public_subnets:
+        - "10.1.101.0/24"
+        - "10.1.102.0/24"
+    
+    prod:
+      cidr: "10.2.0.0/16"
+      private_subnets:
+        - "10.2.1.0/24"
+        - "10.2.2.0/24"
+        - "10.2.3.0/24"
+      public_subnets:
+        - "10.2.101.0/24"
+        - "10.2.102.0/24"
+        - "10.2.103.0/24"
+
+  s3_lifecycle_rules:
+    landing:
+      transition_to_ia_days: 30
+      transition_to_glacier_days: 90
+      expiration_days: 365
+    
+    validated:
+      transition_to_ia_days: 60
+      transition_to_glacier_days: 180
+      expiration_days: 730
+    
+    processed:
+      transition_to_ia_days: 90
+      transition_to_glacier_days: 365
+      expiration_days: 2555

@@ -1,0 +1,100 @@
+
+# ============================================================
+# config/pii-patterns/uk-patterns.json - UK PII patterns
+# ============================================================
+
+{
+  "version": "1.0.0",
+  "patterns": [
+    {
+      "name": "nhs_number",
+      "description": "NHS Number (10 digits, usually formatted as 3-3-4)",
+      "regex": "\\b[0-9]{3}[\\s-]?[0-9]{3}[\\s-]?[0-9]{4}\\b",
+      "severity": "high",
+      "action": "redact"
+    },
+    {
+      "name": "ni_number",
+      "description": "UK National Insurance Number",
+      "regex": "\\b[A-CEGHJ-PR-TW-Z]{1}[A-CEGHJ-NPR-TW-Z]{1}[0-9]{6}[A-DFM]{0,1}\\b",
+      "severity": "high",
+      "action": "redact"
+    },
+    {
+      "name": "uk_postcode",
+      "description": "UK Postcode",
+      "regex": "\\b[A-Z]{1,2}[0-9]{1,2}[A-Z]?\\s?[0-9][A-Z]{2}\\b",
+      "severity": "medium",
+      "action": "partial_redact"
+    },
+    {
+      "name": "uk_phone",
+      "description": "UK Phone Number",
+      "regex": "\\b(?:0[1-9]\\d{8,9}|\\+44\\s?[1-9]\\d{8,9})\\b",
+      "severity": "medium",
+      "action": "redact"
+    },
+    {
+      "name": "email",
+      "description": "Email Address",
+      "regex": "\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b",
+      "severity": "medium",
+      "action": "redact"
+    },
+    {
+      "name": "uk_passport",
+      "description": "UK Passport Number",
+      "regex": "\\b[0-9]{9}\\b",
+      "severity": "high",
+      "action": "redact"
+    },
+    {
+      "name": "uk_driving_license",
+      "description": "UK Driving License Number",
+      "regex": "\\b[A-Z]{2,5}[0-9]{6}[A-Z0-9]{3}[A-Z]{2}\\b",
+      "severity": "high",
+      "action": "redact"
+    },
+    {
+      "name": "date_of_birth",
+      "description": "Date of Birth patterns",
+      "regex": "\\b(?:0[1-9]|[12][0-9]|3[01])[-/.](?:0[1-9]|1[012])[-/.](?:19|20)\\d\\d\\b",
+      "severity": "medium",
+      "action": "redact"
+    },
+    {
+      "name": "bank_account",
+      "description": "UK Bank Account Number",
+      "regex": "\\b[0-9]{8}\\b",
+      "severity": "high",
+      "action": "redact"
+    },
+    {
+      "name": "sort_code",
+      "description": "UK Bank Sort Code",
+      "regex": "\\b[0-9]{2}[-\\s]?[0-9]{2}[-\\s]?[0-9]{2}\\b",
+      "severity": "high",
+      "action": "redact"
+    }
+  ],
+  "column_indicators": [
+    "name",
+    "patient",
+    "person",
+    "individual",
+    "contact",
+    "email",
+    "phone",
+    "mobile",
+    "address",
+    "postcode",
+    "dob",
+    "birth",
+    "ssn",
+    "ni_number",
+    "nhs",
+    "passport",
+    "license",
+    "bank"
+  ]
+}

@@ -1,0 +1,83 @@
+
+# ============================================================
+# infrastructure/configs/monitoring.yaml - Monitoring configuration
+# ============================================================
+
+monitoring:
+  cloudwatch:
+    log_retention_days:
+      dev: 7
+      staging: 30
+      prod: 90
+    
+    alarms:
+      lambda_errors:
+        threshold: 5
+        evaluation_periods: 2
+        period: 300
+        statistic: "Sum"
+      
+      lambda_duration:
+        threshold: 30000  # 30 seconds
+        evaluation_periods: 2
+        period: 300
+        statistic: "Average"
+      
+      s3_bucket_size:
+        threshold: 1099511627776  # 1TB
+        evaluation_periods: 1
+        period: 86400
+        statistic: "Average"
+      
+      glue_job_failures:
+        threshold: 2
+        evaluation_periods: 1
+        period: 3600
+        statistic: "Sum"
+    
+    dashboards:
+      - name: "UKHSA Platform Overview"
+        widgets:
+          - type: "lambda_metrics"
+          - type: "s3_metrics"
+          - type: "glue_metrics"
+          - type: "validation_metrics"
+      
+      - name: "Data Quality Dashboard"
+        widgets:
+          - type: "validation_success_rate"
+          - type: "pii_detection_rate"
+          - type: "data_completeness"
+          - type: "processing_time"
+
+  notifications:
+    channels:
+      - type: "email"
+        endpoints:
+          dev: ["dev-team@ukhsa.gov.uk"]
+          staging: ["staging-alerts@ukhsa.gov.uk"]
+          prod: ["prod-alerts@ukhsa.gov.uk", "oncall@ukhsa.gov.uk"]
+      
+      - type: "slack"
+        webhooks:
+          dev: "https://hooks.slack.com/services/DEV/WEBHOOK"
+          staging: "https://hooks.slack.com/services/STAGING/WEBHOOK"
+          prod: "https://hooks.slack.com/services/PROD/WEBHOOK"
+    
+    severity_levels:
+      critical:
+        channels: ["email", "slack", "pagerduty"]
+        response_time: "immediate"
+      
+      high:
+        channels: ["email", "slack"]
+        response_time: "1 hour"
+      
+      medium:
+        channels: ["email"]
+        response_time: "4 hours"
+      
+      low:
+        channels: ["email"]
+        response_time: "next business day"
+

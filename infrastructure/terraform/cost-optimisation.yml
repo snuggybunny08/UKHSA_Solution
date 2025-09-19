@@ -1,0 +1,73 @@
+# ============================================================
+# infrastructure/configs/cost-optimization.yaml - Cost optimization
+# ============================================================
+
+cost_optimization:
+  s3:
+    intelligent_tiering: true
+    lifecycle_policies: true
+    
+    storage_classes:
+      landing:
+        initial: "STANDARD"
+        after_30_days: "STANDARD_IA"
+        after_90_days: "GLACIER"
+      
+      validated:
+        initial: "STANDARD"
+        after_60_days: "STANDARD_IA"
+        after_180_days: "GLACIER"
+      
+      processed:
+        initial: "STANDARD"
+        after_90_days: "STANDARD_IA"
+        after_365_days: "DEEP_ARCHIVE"
+  
+  lambda:
+    provisioned_concurrency:
+      dev: 0
+      staging: 2
+      prod: 10
+    
+    memory_optimization:
+      monitor_duration: true
+      right_size_memory: true
+      use_graviton: false
+  
+  glue:
+    auto_scaling:
+      enabled: true
+      min_capacity: 2
+      max_capacity: 20
+    
+    job_bookmark: true
+    
+    spark_ui:
+      dev: false
+      staging: true
+      prod: true
+  
+  athena:
+    workgroup_settings:
+      enforce_workgroup_configuration: true
+      publish_cloudwatch_metrics: true
+      bytes_scanned_cutoff_per_query: 10737418240  # 10 GB
+    
+    query_optimization:
+      use_partition_projection: true
+      use_columnar_formats: true
+      compress_results: true
+  
+  tagging_strategy:
+    mandatory_tags:
+      - "Project"
+      - "Environment"
+      - "CostCenter"
+      - "Owner"
+      - "DataClass"
+    
+    cost_allocation_tags:
+      - "Project"
+      - "Environment"
+      - "CostCenter"
+      - "Team"

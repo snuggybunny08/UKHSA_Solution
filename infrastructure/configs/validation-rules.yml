@@ -1,0 +1,104 @@
+
+# ============================================================
+# infrastructure/configs/validation-rules.yaml - Validation rule templates
+# ============================================================
+
+validation_rules:
+  communicable_disease:
+    schema:
+      required_columns:
+        - report_date
+        - disease_name
+        - case_count
+        - region
+        - age_group
+      
+      optional_columns:
+        - death_count
+        - hospitalization_count
+        - vaccination_status
+    
+    data_types:
+      report_date: datetime
+      disease_name: string
+      case_count: integer
+      death_count: integer
+      region: string
+      age_group: string
+    
+    business_rules:
+      - name: "Date range validation"
+        field: "report_date"
+        min: "2020-01-01"
+        max: "current_date"
+      
+      - name: "Case count range"
+        field: "case_count"
+        min: 0
+        max: 1000000
+      
+      - name: "Valid regions"
+        field: "region"
+        allowed_values:
+          - "London"
+          - "South East"
+          - "South West"
+          - "East of England"
+          - "East Midlands"
+          - "West Midlands"
+          - "Yorkshire and the Humber"
+          - "North East"
+          - "North West"
+          - "Wales"
+          - "Scotland"
+          - "Northern Ireland"
+    
+    data_quality:
+      null_threshold: 0.1
+      duplicate_threshold: 0.05
+      outlier_detection:
+        method: "iqr"
+        threshold: 1.5
+      
+      completeness_checks:
+        - field: "case_count"
+          required: true
+        - field: "report_date"
+          required: true
+        - field: "region"
+          required: true
+
+  immunisation:
+    schema:
+      required_columns:
+        - vaccination_date
+        - vaccine_type
+        - dose_number
+        - age_group
+        - region
+      
+      optional_columns:
+        - batch_number
+        - adverse_events
+    
+    data_types:
+      vaccination_date: datetime
+      vaccine_type: string
+      dose_number: integer
+      age_group: string
+      region: string
+    
+    business_rules:
+      - name: "Valid dose numbers"
+        field: "dose_number"
+        min: 1
+        max: 5
+      
+      - name: "Valid vaccine types"
+        field: "vaccine_type"
+        allowed_values:
+          - "Pfizer-BioNTech"
+          - "Oxford-AstraZeneca"
+          - "Moderna"
+          - "Janssen"
+          - "Novavax"

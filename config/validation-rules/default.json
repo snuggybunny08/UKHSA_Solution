@@ -1,0 +1,98 @@
+
+============================================================
+# config/validation-rules/default.json - Default validation rules
+============================================================
+
+{
+  "version": "1.0.0",
+  "rules": [
+    {
+      "id": "schema_validation",
+      "type": "schema",
+      "enabled": true,
+      "required_columns": [
+        "report_date",
+        "case_count",
+        "region"
+      ],
+      "optional_columns": [
+        "death_count",
+        "hospitalization_count",
+        "vaccination_status",
+        "age_group",
+        "gender"
+      ]
+    },
+    {
+      "id": "data_type_validation",
+      "type": "data_types",
+      "enabled": true,
+      "column_types": {
+        "report_date": "datetime",
+        "case_count": "integer",
+        "death_count": "integer",
+        "hospitalization_count": "integer",
+        "region": "string",
+        "age_group": "string",
+        "gender": "string",
+        "vaccination_status": "string"
+      }
+    },
+    {
+      "id": "value_range_validation",
+      "type": "value_ranges",
+      "enabled": true,
+      "ranges": {
+        "case_count": {
+          "min": 0,
+          "max": 1000000
+        },
+        "death_count": {
+          "min": 0,
+          "max": 10000
+        },
+        "report_date": {
+          "min": "2020-01-01",
+          "max": "current_date"
+        }
+      }
+    },
+    {
+      "id": "region_validation",
+      "type": "allowed_values",
+      "enabled": true,
+      "column": "region",
+      "allowed_values": [
+        "London",
+        "South East",
+        "South West",
+        "East of England",
+        "East Midlands",
+        "West Midlands",
+        "Yorkshire and the Humber",
+        "North East",
+        "North West",
+        "Wales",
+        "Scotland",
+        "Northern Ireland"
+      ]
+    },
+    {
+      "id": "data_quality_checks",
+      "type": "quality",
+      "enabled": true,
+      "checks": {
+        "null_threshold": 0.1,
+        "duplicate_threshold": 0.05,
+        "outlier_detection": {
+          "method": "iqr",
+          "threshold": 1.5
+        },
+        "completeness": {
+          "minimum_required": 0.95
+        }
+      }
+    }
+  ]
+}
+

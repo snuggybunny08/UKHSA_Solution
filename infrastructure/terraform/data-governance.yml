@@ -1,0 +1,90 @@
+# ============================================================
+# infrastructure/configs/data-governance.yaml - Data governance
+# ============================================================
+
+data_governance:
+  classification:
+    levels:
+      - name: "public"
+        description: "Publicly available data"
+        encryption_required: false
+        access_logging: false
+      
+      - name: "internal"
+        description: "Internal use only"
+        encryption_required: true
+        access_logging: true
+      
+      - name: "sensitive"
+        description: "Contains PII or health data"
+        encryption_required: true
+        access_logging: true
+        additional_controls:
+          - "macie_scanning"
+          - "dlp_policies"
+          - "access_reviews"
+      
+      - name: "restricted"
+        description: "Highly sensitive data"
+        encryption_required: true
+        access_logging: true
+        additional_controls:
+          - "macie_scanning"
+          - "dlp_policies"
+          - "access_reviews"
+          - "mfa_required"
+          - "vpn_required"
+  
+  lineage:
+    tracking:
+      enabled: true
+      tools:
+        - "AWS Glue Data Catalog"
+        - "Custom metadata store"
+    
+    metadata:
+      required_fields:
+        - "source_system"
+        - "creation_date"
+        - "last_modified"
+        - "data_owner"
+        - "retention_period"
+        - "classification_level"
+  
+  quality:
+    dimensions:
+      - name: "completeness"
+        threshold: 0.95
+      - name: "accuracy"
+        threshold: 0.99
+      - name: "consistency"
+        threshold: 0.98
+      - name: "timeliness"
+        threshold: "24 hours"
+      - name: "validity"
+        threshold: 0.99
+      - name: "uniqueness"
+        threshold: 0.95
+    
+    monitoring:
+      automated_checks: true
+      alerting: true
+      reporting_frequency: "daily"
+  
+  retention:
+    policies:
+      - data_type: "raw"
+        retention_period: 90
+        action: "delete"
+      
+      - data_type: "processed"
+        retention_period: 365
+        action: "archive"
+      
+      - data_type: "aggregated"
+        retention_period: 2555
+        action: "archive"
+      
+      - data_type: "pii"
+        retention_period: 90
+        action: "anonymize_then_archive"

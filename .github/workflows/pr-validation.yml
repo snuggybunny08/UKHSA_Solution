@@ -1,0 +1,75 @@
+---
+# .github/workflows/pr-validation.yml - Pull request validation
+
+name: PR Validation
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  validate-pr:
+    name: Validate Pull Request
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        pip install -r requirements-dev.txt
+    
+    - name: Run linters
+      run: |
+        # Python linting
+        flake8 lambdas/ --max-line-length=120
+        pylint lambdas/
+        black --check lambdas/
+        
+        # YAML linting
+        yamllint .github/workflows/
+    
+    - name: Check documentation
+      run: |
+        # Check if README is updated
+        if ! grep -q "$(date +%Y)" README.md; then
+          echo "README might be outdated"
+        fi
+        
+        # Check for docstrings
+        pydocstyle lambdas/
+    
+    - name: Run security checks
+      run: |
+        # Check for secrets
+        detect-secrets scan --baseline .secrets.baseline
+        
+        # Check dependencies
+        safety check
+    
+    - name: Comment PR
+      uses: actions/github-script@v6
+      if: always()
+      with:
+        script: |
+          const output = `#### Validation Results ✅
+          
+          | Check | Status |
+          |-------|--------|
+          | Linting | ${{ steps.linting.outcome }} |
+          | Security | ${{ steps.security.outcome }} |
+          | Tests | ${{ steps.tests.outcome }} |
+          
+          *Pushed by @${{ github.actor }}*`;
+          
+          github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: output
+          })

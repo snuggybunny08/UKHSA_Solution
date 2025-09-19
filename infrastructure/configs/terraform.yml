@@ -1,0 +1,27 @@
+# ============================================================
+# infrastructure/configs/terraform.yaml - Terraform configuration
+# ============================================================
+
+terraform:
+  version: "1.5.0"
+  backend:
+    type: "s3"
+    bucket: "ukhsa-terraform-state"
+    region: "eu-west-2"
+    encrypt: true
+    dynamodb_table: "terraform-state-lock"
+  
+  workspaces:
+    - dev
+    - staging
+    - prod
+  
+  modules:
+    - name: "networking"
+      source: "./modules/networking"
+    - name: "storage"
+      source: "./modules/storage"
+    - name: "compute"
+      source: "./modules/compute"
+    - name: "monitoring"
+      source: "./modules/monitoring"

@@ -1,0 +1,66 @@
+# ============================================================
+# docker-compose.yml - Local development environment
+# ============================================================
+
+version: '3.8'
+
+services:
+  localstack:
+    image: localstack/localstack:latest
+    container_name: ukhsa-localstack
+    ports:
+      - "4566:4566"  # LocalStack Gateway
+      - "4571:4571"  # Elasticsearch
+    environment:
+      - DEBUG=1
+      - SERVICES=s3,lambda,sns,sqs,dynamodb,cloudwatch,logs,iam,sts,glue
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=eu-west-2
+      - LAMBDA_EXECUTOR=docker-reuse
+      - DOCKER_HOST=unix:///var/run/docker.sock
+      - DATA_DIR=/tmp/localstack/data
+    volumes:
+      - "${TMPDIR:-/tmp}/localstack:/tmp/localstack"
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./scripts/localstack:/docker-entrypoint-initaws.d"
+    networks:
+      - ukhsa-network
+
+  postgres:
+    image: postgres:15
+    container_name: ukhsa-postgres
+    environment:
+      - POSTGRES_DB=ukhsa_metadata
+      - POSTGRES_USER=ukhsa_user
+      - POSTGRES_PASSWORD=secure_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - ukhsa-network
+
+  jupyter:
+    image: jupyter/pyspark-notebook:latest
+    container_name: ukhsa-jupyter
+    ports:
+      - "8888:8888"
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - AWS_DEFAULT_REGION=eu-west-2
+    volumes:
+      - ./notebooks:/home/jovyan/work
+      - ./data:/home/jovyan/data
+    networks:
+      - ukhsa-network
+
+volumes:
+  postgres_data:
+
+networks:
+  ukhsa-network:
+    driver: bridge
+

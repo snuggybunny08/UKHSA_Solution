@@ -1,0 +1,37 @@
+
+# ============================================================
+# tests/fixtures/sample_data.json
+# ============================================================
+"""
+{
+  "metadata": {
+    "source": "UKHSA Test Data",
+    "version": "1.0.0",
+    "generated": "2025-01-01T00:00:00Z"
+  },
+  "records": [
+    {
+      "report_date": "2025-01-01",
+      "region": "London",
+      "disease_name": "COVID-19",
+      "case_count": 100,
+      "death_count": 5,
+      "hospitalization_count": 20,
+      "age_group": "30-49",
+      "gender": "Male",
+      "vaccination_status": "Fully Vaccinated"
+    },
+    {
+      "report_date": "2025-01-01",
+      "region": "Wales",
+      "disease_name": "COVID-19",
+      "case_count": 150,
+      "death_count": 8,
+      "hospitalization_count": 30,
+      "age_group": "50-69",
+      "gender": "Female",
+      "vaccination_status": "Partially Vaccinated"
+    }
+  ]
+}
+"""

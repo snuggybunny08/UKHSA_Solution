@@ -1,0 +1,202 @@
+---
+# ============================================================
+# .github/workflows/destroy.yml - Infrastructure teardown workflow
+# ============================================================
+
+name: Destroy Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to destroy'
+        required: true
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      confirm:
+        description: 'Type the environment name to confirm destruction'
+        required: true
+        type: string
+
+env:
+  AWS_REGION: eu-west-2
+  TERRAFORM_VERSION: '1.5.0'
+
+jobs:
+  validate:
+    name: Validate Destruction Request
+    runs-on: ubuntu-latest
+    outputs:
+      proceed: ${{ steps.validate.outputs.proceed }}
+    
+    steps:
+      - name: Validate confirmation
+        id: validate
+        run: |
+          if [ "${{ github.event.inputs.environment }}" != "${{ github.event.inputs.confirm }}" ]; then
+            echo "❌ Confirmation does not match environment name"
+            echo "proceed=false" >> $GITHUB_OUTPUT
+            exit 1
+          fi
+          
+          if [ "${{ github.event.inputs.environment }}" == "prod" ]; then
+            if [ "${{ github.actor }}" != "admin-user" ] && [ "${{ github.actor }}" != "platform-lead" ]; then
+              echo "❌ Only admin-user or platform-lead can destroy production"
+              echo "proceed=false" >> $GITHUB_OUTPUT
+              exit 1
+            fi
+          fi
+          
+          echo "✅ Validation passed"
+          echo "proceed=true" >> $GITHUB_OUTPUT
+
+  backup:
+    name: Backup Current State
+    runs-on: ubuntu-latest
+    needs: validate
+    if: needs.validate.outputs.proceed == 'true'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+      
+      - name: Terraform Init
+        working-directory: infrastructure/terraform
+        run: terraform init
+      
+      - name: Select Workspace
+        working-directory: infrastructure/terraform
+        run: terraform workspace select ${{ github.event.inputs.environment }}
+      
+      - name: Backup Terraform State
+        run: |
+          TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+          BACKUP_KEY="backups/${{ github.event.inputs.environment }}/terraform-state-${TIMESTAMP}.tfstate"
+          
+          cd infrastructure/terraform
+          terraform state pull > backup.tfstate
+          
+          aws s3 cp backup.tfstate s3://ukhsa-terraform-state/${BACKUP_KEY}
+          
+          echo "📦 State backed up to: ${BACKUP_KEY}"
+      
+      - name: Export Resource List
+        working-directory: infrastructure/terraform
+        run: |
+          terraform state list > resources.txt
+          
+          echo "📋 Resources to be destroyed:"
+          cat resources.txt
+      
+      - name: Upload Resource List
+        uses: actions/upload-artifact@v3
+        with:
+          name: resources-to-destroy
+          path: infrastructure/terraform/resources.txt
+
+  destroy:
+    name: Destroy Infrastructure
+    runs-on: ubuntu-latest
+    needs: [validate, backup]
+    if: needs.validate.outputs.proceed == 'true'
+    environment:
+      name: ${{ github.event.inputs.environment }}-destroy
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v2
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+      
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v2
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+      
+      - name: Terraform Init
+        working-directory: infrastructure/terraform
+        run: terraform init
+      
+      - name: Select Workspace
+        working-directory: infrastructure/terraform
+        run: terraform workspace select ${{ github.event.inputs.environment }}
+      
+      - name: Terraform Destroy
+        working-directory: infrastructure/terraform
+        run: |
+          terraform destroy \
+            -var-file=environments/${{ github.event.inputs.environment }}.tfvars \
+            -auto-approve
+      
+      - name: Verify Destruction
+        run: |
+          echo "🔍 Verifying resource destruction..."
+          
+          # Check S3 buckets
+          BUCKETS=$(aws s3 ls | grep "ukhsa-.*-${{ github.event.inputs.environment }}" || true)
+          if [ -n "$BUCKETS" ]; then
+            echo "⚠️  Warning: Some S3 buckets still exist"
+            echo "$BUCKETS"
+          fi
+          
+          # Check Lambda functions
+          LAMBDAS=$(aws lambda list-functions --query "Functions[?contains(FunctionName, 'ukhsa') && contains(FunctionName, '${{ github.event.inputs.environment }}')].FunctionName" --output text || true)
+          if [ -n "$LAMBDAS" ]; then
+            echo "⚠️  Warning: Some Lambda functions still exist"
+            echo "$LAMBDAS"
+          fi
+      
+      - name: Clean Up Workspace
+        working-directory: infrastructure/terraform
+        run: |
+          if [ "${{ github.event.inputs.environment }}" != "prod" ]; then
+            terraform workspace select default
+            terraform workspace delete ${{ github.event.inputs.environment }} || true
+          fi
+
+  notify:
+    name: Send Notification
+    runs-on: ubuntu-latest
+    needs: [validate, destroy]
+    if: always()
+    
+    steps:
+      - name: Send Slack Notification
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          payload: |
+            {
+              "text": "Infrastructure Destruction Status",
+              "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*Infrastructure Destruction*\n*Environment:* ${{ github.event.inputs.environment }}\n*Status:* ${{ needs.destroy.result }}\n*Initiated by:* ${{ github.actor }}\n*Time:* ${{ github.event.repository.updated_at }}"
+                  }
+                }
+              ]
+            }
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+

@@ -1,0 +1,39 @@
+
+# ============================================================
+# tests/fixtures/sample_data.xml
+# ============================================================
+"""
+<?xml version="1.0" encoding="UTF-8"?>
+<surveillance_data>
+  <metadata>
+    <source>UKHSA Test Data</source>
+    <version>1.0.0</version>
+    <generated>2025-01-01T00:00:00Z</generated>
+  </metadata>
+  <records>
+    <record>
+      <report_date>2025-01-01</report_date>
+      <region>London</region>
+      <disease_name>COVID-19</disease_name>
+      <case_count>100</case_count>
+      <death_count>5</death_count>
+      <hospitalization_count>20</hospitalization_count>
+      <age_group>30-49</age_group>
+      <gender>Male</gender>
+      <vaccination_status>Fully Vaccinated</vaccination_status>
+    </record>
+    <record>
+      <report_date>2025-01-01</report_date>
+      <region>Wales</region>
+      <disease_name>COVID-19</disease_name>
+      <case_count>150</case_count>
+      <death_count>8</death_count>
+      <hospitalization_count>30</hospitalization_count>
+      <age_group>50-69</age_group>
+      <gender>Female</gender>
+      <vaccination_status>Partially Vaccinated</vaccination_status>
+    </record>
+  </records>
+</surveillance_data>
+"""
+

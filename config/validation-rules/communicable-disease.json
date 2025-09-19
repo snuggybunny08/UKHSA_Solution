@@ -1,0 +1,27 @@
+# ============================================================
+# config/validation-rules/communicable-disease.json
+# ============================================================
+"""
+{
+  "version": "1.0.0",
+  "dataset_type": "communicable_disease",
+  "rules": [
+    {
+      "id": "cd_schema_001",
+      "type": "schema",
+      "enabled": true,
+      "required_columns": [
+        "report_date",
+        "disease_name",
+        "region",
+        "case_count"
+      ]
+    },
+    {
+      "id": "cd_range_001",
+      "type": "value_ranges",
+      "enabled": true,
+      "ranges": {
+        "case_count": {"min": 0, "max": 1000000},
+        "death_count": {"min": 0, "max": 100000},
+        "hospitalization_count": {"min

@@ -1,6 +1,4 @@
-# ============================================================
-# tests/fixtures/sample_data.csv
-# ============================================================
+
 """
 report_date,region,disease_name,case_count,death_count,hospitalization_count,age_group,gender,vaccination_status
 2025-01-01,London,COVID-19,100,5,20,30-49,Male,Fully Vaccinated

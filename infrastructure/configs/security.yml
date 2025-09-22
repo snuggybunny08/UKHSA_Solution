@@ -1,6 +1,3 @@
-# ============================================================
-# infrastructure/configs/security.yaml - Security configuration
-# ============================================================
 
 security:
   encryption:

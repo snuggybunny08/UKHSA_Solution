@@ -1,7 +1,3 @@
----
-# ============================================================
-# .github/pull_request_template.md - PR template
-# ============================================================
 
 ## Description
 Brief description of changes made in this PR.

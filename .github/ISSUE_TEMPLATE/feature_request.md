@@ -1,9 +1,4 @@
----
-# ============================================================
-# .github/ISSUE_TEMPLATE/feature_request.md
-# ============================================================
 
----
 name: Feature Request
 about: Suggest an idea for this project
 title: '[FEATURE] '

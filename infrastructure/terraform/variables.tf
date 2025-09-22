@@ -1,6 +1,3 @@
-# ============================================================
-# variables.tf - Variable definitions for UKHSA Data Platform
-# ============================================================
 
 variable "aws_region" {
   description = "AWS region for deployment"

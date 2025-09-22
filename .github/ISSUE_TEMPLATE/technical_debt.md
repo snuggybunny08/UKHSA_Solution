@@ -1,9 +1,4 @@
----
-# ============================================================
-# .github/ISSUE_TEMPLATE/technical_debt.md
-# ============================================================
 
----
 name: Technical Debt
 about: Track technical debt items
 title: '[TECH DEBT] '

@@ -1,7 +1,4 @@
 
-# ============================================================
-# lambdas/shared/utils.py - Shared utility functions
-# ============================================================
 
 import json
 import logging

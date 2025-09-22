@@ -1,6 +1,3 @@
-# ============================================================
-# Makefile - Root level automation
-# ============================================================
 
 .PHONY: help install test deploy destroy clean lint format
 

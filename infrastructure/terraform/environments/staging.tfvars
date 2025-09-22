@@ -1,7 +1,4 @@
 
-# ============================================================
-# environments/staging.tfvars - Staging environment configuration
-# ============================================================
 
 environment = "staging"
 aws_region  = "eu-west-2"

@@ -1,6 +1,3 @@
-# ============================================================
-# infrastructure/configs/cost-optimization.yaml - Cost optimization
-# ============================================================
 
 cost_optimization:
   s3:

@@ -1,6 +1,3 @@
-# ============================================================
-# modules/notifications/main.tf - Notifications Module
-# ============================================================
 
 locals {
   topic_prefix = "${var.project_prefix}-${var.environment}"

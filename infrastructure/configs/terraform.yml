@@ -1,6 +1,3 @@
-# ============================================================
-# infrastructure/configs/terraform.yaml - Terraform configuration
-# ============================================================
 
 terraform:
   version: "1.5.0"

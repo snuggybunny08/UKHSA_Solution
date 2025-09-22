@@ -1,5 +1,3 @@
-# .github/workflows/deploy.yml - Main deployment workflow
-
 name: Deploy UKHSA Data Platform
 
 on:

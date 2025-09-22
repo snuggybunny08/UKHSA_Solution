@@ -1,4 +1,3 @@
-# validator.py - Main validation Lambda function for UKHSA Data Platform
 
 import json
 import logging

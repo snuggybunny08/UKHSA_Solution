@@ -1,7 +1,4 @@
 
-# ============================================================
-# tests/unit/test_processor.py - File processor unit tests
-# ============================================================
 
 import pytest
 import json

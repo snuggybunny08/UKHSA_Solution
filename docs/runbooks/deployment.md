@@ -110,3 +110,110 @@ make test-smoke ENV=<environment>
 - Verify data schema compatibility
 
 ---
+
+
+
+
+# ============================================================
+# docs/runbooks/deployment.md
+# ============================================================
+
+# Deployment Runbook
+
+## Prerequisites
+
+1. AWS Account with appropriate IAM permissions
+2. AWS CLI configured
+3. Terraform >= 1.5.0 installed
+4. Python 3.11+ installed
+5. Git repository access
+
+## Deployment Steps
+
+### 1. Clone Repository
+
+```bash
+git clone https://github.com/ukhsa/data-platform.git
+cd data-platform
+```
+
+### 2. Install Dependencies
+
+```bash
+make install
+```
+
+### 3. Configure Environment
+
+```bash
+cp .env.example .env
+# Edit .env with appropriate values
+```
+
+### 4. Initialize Terraform
+
+```bash
+cd infrastructure/terraform
+terraform init
+```
+
+### 5. Plan Deployment
+
+```bash
+terraform plan -var-file=environments/dev.tfvars -out=dev.tfplan
+```
+
+### 6. Review Plan
+
+Verify:
+- Resources to be created
+- No unintended deletions
+- Correct environment configuration
+
+### 7. Apply Infrastructure
+
+```bash
+terraform apply dev.tfplan
+```
+
+### 8. Package and Deploy Lambdas
+
+```bash
+cd ../..
+make package-lambdas
+make deploy-lambdas ENV=dev
+```
+
+### 9. Upload Glue Scripts
+
+```bash
+make upload-glue ENV=dev
+```
+
+### 10. Verify Deployment
+
+```bash
+make test-smoke ENV=dev
+```
+
+## Post-Deployment
+
+1. **Configure SNS Subscriptions**: Confirm email subscriptions
+2. **Test File Upload**: Upload sample file to landing bucket
+3. **Check CloudWatch Logs**: Verify no errors
+4. **Access Dashboard**: Verify CloudWatch dashboard is accessible
+5. **Document**: Update deployment log
+
+## Rollback Procedure
+
+If deployment fails:
+
+```bash
+# Revert to previous Terraform state
+terraform workspace select dev
+terraform state pull > current-state.json
+terraform state push backup-state.json
+
+# Or destroy and redeploy
+terraform destroy -var-file=environments/dev.tfvars
+```

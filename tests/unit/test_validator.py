@@ -1,4 +1,3 @@
-# tests/unit/test_validator.py - Unit tests for the data validator
 
 import pytest
 import json

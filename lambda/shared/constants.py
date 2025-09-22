@@ -1,7 +1,4 @@
 
-# ============================================================
-# lambdas/shared/constants.py - Shared constants
-# ============================================================
 
 # File processing constants
 MAX_FILE_SIZE = 100 * 1024 * 1024  # 100MB

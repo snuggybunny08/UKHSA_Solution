@@ -1,8 +1,3 @@
----
-# ============================================================
-# .github/workflows/destroy.yml - Infrastructure teardown workflow
-# ============================================================
-
 name: Destroy Infrastructure
 
 on:

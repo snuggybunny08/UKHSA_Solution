@@ -1,6 +1,3 @@
-# ============================================================
-# modules/dynamodb/main.tf - DynamoDB Module
-# ============================================================
 
 locals {
   table_prefix = "${var.project_prefix}-${var.environment}"

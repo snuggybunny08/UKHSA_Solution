@@ -1,6 +1,3 @@
-# ============================================================
-# infrastructure/configs/makefile - Build automation
-# ============================================================
 
 .PHONY: help init validate plan apply destroy test clean
 

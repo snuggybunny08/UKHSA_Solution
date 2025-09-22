@@ -1,6 +1,3 @@
-# ============================================================
-# tests/integration/test_s3_lambda.py - Integration tests
-# ============================================================
 
 import pytest
 import boto3

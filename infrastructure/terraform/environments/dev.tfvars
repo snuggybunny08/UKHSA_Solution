@@ -1,8 +1,4 @@
 
-# ============================================================
-# environments/dev.tfvars - Development environment configuration
-# ============================================================
-
 environment = "dev"
 aws_region  = "eu-west-2"
 

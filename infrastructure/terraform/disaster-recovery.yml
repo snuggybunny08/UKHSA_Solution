@@ -1,6 +1,3 @@
-# ============================================================
-# infrastructure/configs/disaster-recovery.yaml - DR configuration
-# ============================================================
 
 disaster_recovery:
   backup:

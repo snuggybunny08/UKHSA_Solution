@@ -1,7 +1,3 @@
-# ============================================================
-# glue/jobs/data_quality.py - Data quality checks job
-# ============================================================
-
 import sys
 import logging
 from datetime import datetime

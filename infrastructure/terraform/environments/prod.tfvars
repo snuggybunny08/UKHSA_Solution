@@ -1,6 +1,3 @@
-# ============================================================
-# environments/prod.tfvars - Production environment configuration
-# ============================================================
 
 environment = "prod"
 aws_region  = "eu-west-2"

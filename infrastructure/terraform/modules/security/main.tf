@@ -1,8 +1,4 @@
 
-# ============================================================
-# modules/security/main.tf - Security Module
-# ============================================================
-
 # Macie Configuration
 resource "aws_macie2_account" "main" {
   count = var.enable_macie ? 1 : 0

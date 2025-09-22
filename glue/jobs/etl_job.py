@@ -1,4 +1,3 @@
-# etl_job.py - AWS Glue ETL Job for UKHSA Data Platform
 
 import sys
 import logging

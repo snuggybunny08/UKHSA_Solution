@@ -1,8 +1,4 @@
 
-# ============================================================
-# infrastructure/configs/aws-config.yaml - AWS configuration
-# ============================================================
-
 aws:
   region: "eu-west-2"
   availability_zones:

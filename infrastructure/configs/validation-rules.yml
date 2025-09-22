@@ -1,8 +1,4 @@
 
-# ============================================================
-# infrastructure/configs/validation-rules.yaml - Validation rule templates
-# ============================================================
-
 validation_rules:
   communicable_disease:
     schema:

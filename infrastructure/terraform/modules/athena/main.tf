@@ -1,8 +1,4 @@
 
-# ============================================================
-# modules/athena/main.tf - Athena Module
-# ============================================================
-
 locals {
   workgroup_name = "${var.project_prefix}-${var.environment}-workgroup"
 }

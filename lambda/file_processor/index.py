@@ -1,4 +1,3 @@
-# lambdas/file_processor/index.py - File Processor Lambda Function
 
 import json
 import logging

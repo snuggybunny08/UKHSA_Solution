@@ -1,8 +1,4 @@
 
-# ============================================================
-# infrastructure/scripts/validate.sh - Validate configuration
-# ============================================================
-
 validate() {
     print_message "$YELLOW" "Validating Terraform configuration..."
     

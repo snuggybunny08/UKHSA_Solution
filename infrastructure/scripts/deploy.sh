@@ -1,7 +1,4 @@
 #!/bin/bash
-# ============================================================
-# infrastructure/scripts/deploy.sh - Deployment script
-# ============================================================
 
 set -e  # Exit on error
 

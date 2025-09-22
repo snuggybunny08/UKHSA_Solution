@@ -1,8 +1,4 @@
 
-# ============================================================
-# infrastructure/scripts/backup.sh - Backup state and configs
-# ============================================================
-
 backup() {
     local env=$1
     local backup_dir="${SCRIPT_DIR}/../backups/$(date +%Y%m%d_%H%M%S)"

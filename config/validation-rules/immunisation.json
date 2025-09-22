@@ -1,0 +1,39 @@
+{
+  "version": "1.0.0",
+  "dataset_type": "immunisation",
+  "rules": [
+    {
+      "id": "imm_schema_001",
+      "type": "schema",
+      "enabled": true,
+      "required_columns": [
+        "vaccination_date",
+        "vaccine_type",
+        "dose_number",
+        "region",
+        "age_group"
+      ]
+    },
+    {
+      "id": "imm_dose_001",
+      "type": "value_ranges",
+      "enabled": true,
+      "ranges": {
+        "dose_number": {"min": 1, "max": 10},
+        "dose_count": {"min": 0, "max": 1000000}
+      }
+    },
+    {
+      "id": "imm_vaccine_001",
+      "type": "allowed_values",
+      "enabled": true,
+      "column": "vaccine_type",
+      "allowed_values": [
+        "COVID-19_Pfizer", "COVID-19_AstraZeneca", "COVID-19_Moderna",
+        "Influenza", "MMR", "HPV", "Pneumococcal", "Meningococcal",
+        "Hepatitis_B", "Other"
+      ]
+    }
+  ]
+}
+

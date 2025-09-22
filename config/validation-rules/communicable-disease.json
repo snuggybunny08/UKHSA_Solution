@@ -1,7 +1,4 @@
-# ============================================================
-# config/validation-rules/communicable-disease.json
-# ============================================================
-"""
+
 {
   "version": "1.0.0",
   "dataset_type": "communicable_disease",
@@ -24,4 +21,19 @@
       "ranges": {
         "case_count": {"min": 0, "max": 1000000},
         "death_count": {"min": 0, "max": 100000},
-        "hospitalization_count": {"min
+        "hospitalization_count": {"min": 0, "max": 50000}
+      }
+    },
+    {
+      "id": "cd_disease_001",
+      "type": "allowed_values",
+      "enabled": true,
+      "column": "disease_name",
+      "allowed_values": [
+        "COVID-19", "Influenza", "RSV", "Measles", "Mumps",
+        "Rubella", "Pertussis", "Tuberculosis", "Hepatitis A",
+        "Hepatitis B", "Hepatitis C", "Meningitis", "Other"
+      ]
+    }
+  ]
+}

@@ -1,8 +1,4 @@
 
-# ============================================================
-# infrastructure/scripts/destroy.sh - Destroy infrastructure
-# ============================================================
-
 destroy() {
     local env=$1
     

@@ -1,0 +1,46 @@
+
+{
+  "version": "1.0.0",
+  "mappings": {
+    "date_fields": {
+      "report_date": ["date", "report_dt", "reporting_date", "date_reported"],
+      "vaccination_date": ["vacc_date", "vaccine_date", "immunisation_date"],
+      "surveillance_date": ["surv_date", "surveillance_dt", "monitoring_date"]
+    },
+    "region_mappings": {
+      "london": "London",
+      "LONDON": "London",
+      "south_east": "South East",
+      "SE": "South East",
+      "south_west": "South West",
+      "SW": "South West",
+      "east_of_england": "East of England",
+      "east_midlands": "East Midlands",
+      "EM": "East Midlands",
+      "west_midlands": "West Midlands",
+      "WM": "West Midlands",
+      "yorkshire_humber": "Yorkshire and the Humber",
+      "YH": "Yorkshire and the Humber",
+      "north_east": "North East",
+      "NE": "North East",
+      "north_west": "North West",
+      "NW": "North West",
+      "wales": "Wales",
+      "scotland": "Scotland",
+      "northern_ireland": "Northern Ireland",
+      "NI": "Northern Ireland"
+    },
+    "disease_mappings": {
+      "covid": "COVID-19",
+      "covid19": "COVID-19",
+      "coronavirus": "COVID-19",
+      "sars-cov-2": "COVID-19",
+      "flu": "Influenza",
+      "rsv": "RSV",
+      "tb": "Tuberculosis",
+      "hep_a": "Hepatitis A",
+      "hep_b": "Hepatitis B",
+      "hep_c": "Hepatitis C"
+    }
+  }
+}
